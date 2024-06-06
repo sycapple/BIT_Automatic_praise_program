@@ -1,9 +1,11 @@
 import time
 
-from selenium.webdriver import Edge
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.edge.options import Options
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 import sys
 
 
@@ -40,12 +42,18 @@ if __name__ == '__main__':
     print(f"[INFO]|{current_time()}|正在打开浏览器")
 
     # 创建浏览器对象
-    option = Options()
-    # option.add_argument('--headless')
-    # option.add_argument('--disable-gpu')
-    option.add_experimental_option("detach", True)
-    option.add_argument('--disable-blink-features=AutomationControlled')
-    web = Edge(options=option)
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--start-maximized")
+    options.add_experimental_option("detach", True)
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    web = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    web.execute_cdp_cmd("Emulation.setUserAgentOverride", {
+        "userAgent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0"
+    })
     web.get('https://pj.bit.edu.cn/pjxt2.0/welcome')
     print(f"[INFO]|{current_time()}|当前登录信息如下")
     print(f"[INFO]|{current_time()}|用户:{blue(ACCOUNT)}")
