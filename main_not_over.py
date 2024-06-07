@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import Select
 import sys
 
 
@@ -21,9 +22,9 @@ def teacher_update_not_over():
     web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn"]/a').click()
     web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn_o_1"]').click()
     web.find_element(by=By.XPATH, value='//*[@id="queryform"]/table[1]/tbody/tr/td[2]/button').click()
-    web.find_element(by=By.XPATH, value='//*[@id="queryform"]/div/table/tbody/tr/td/div/ul/li[11]/select').click()
-    web.find_element(by=By.XPATH,
-                     value='//*[@id="queryform"]/div/table/tbody/tr/td/div/ul/li[11]/select/option[11]').click()
+    select = Select(
+        web.find_element(by=By.XPATH, value='//*[@id="queryform"]/div/table/tbody/tr/td/div/ul/li[11]/select'))
+    select.select_by_value("9999")
 
 
 def red(text):
@@ -42,6 +43,19 @@ def current_time():
     return yellow(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 
 
+def get_teacher_and_choose(web, teacher_num):
+    bad_teacher = []
+    for i in range(teacher_num):
+        tr = web.find_element(by=By.XPATH, value=f'//*[@id="table_report"]/tbody/tr[{i + 1}]')
+        teacher_name = tr.find_element(by=By.XPATH, value='./td[5]').text
+        class_name = tr.find_element(by=By.XPATH, value='./td[4]').text
+        print(f"[INFO]|{current_time()}|[{i}]|{teacher_name}|{class_name}")
+    s = input(f"[INFO]|{current_time()}|请选择你想要差评的教师(填数字以','分隔,全部好评则直接回车)>:")
+    for teacher in s.split(','):
+        bad_teacher.append(eval(teacher))
+    return bad_teacher
+
+
 if __name__ == '__main__':
     ACCOUNT = ''
     PASSWORD = ''
@@ -53,7 +67,7 @@ if __name__ == '__main__':
 
     # 创建浏览器对象
     options = Options()
-    options.add_argument('--headless')
+    # options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--window-size=1920,1080")
@@ -89,6 +103,7 @@ if __name__ == '__main__':
     except:
         pass
     print(f"[INFO]|{current_time()}|共有{teacher_num}位教师需要评教")
+    bad_teacher = get_teacher_and_choose(web, teacher_num)
     for j in range(teacher_num):
         tr = web.find_element(by=By.XPATH, value=f'//*[@id="table_report"]/tbody/tr[{j + 1}]')
         teacher_name = tr.find_element(by=By.XPATH, value='./td[5]').text
@@ -101,9 +116,13 @@ if __name__ == '__main__':
             for i in range(9):
                 check_form = check_form_list[i]
                 info = check_form.find_element(by=By.XPATH, value='label').text
-                comment = blue("非常符合")
+                if j in bad_teacher:
+                    comment = blue("非常不符合")
+                    check_form.find_element(by=By.XPATH, value='div[5]/input').click()
+                else:
+                    comment = blue("非常符合")
+                    check_form.find_element(by=By.XPATH, value='div[1]/input').click()
                 print(f"[INFO]|{current_time()}|{info}:{comment}")
-                check_form.find_element(by=By.XPATH, value='div[1]/input').click()
             web.find_element(by=By.XPATH, value='//*[@id="cjForm"]/div/div[2]/div[2]/div[11]/a[1]').click()
             print(f"[INFO]|{current_time()}|{blue(teacher_name)}评教结束")
             time.sleep(0.5)
