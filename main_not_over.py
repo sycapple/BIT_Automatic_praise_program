@@ -10,13 +10,6 @@ from selenium.webdriver.support.ui import Select
 import sys
 
 
-def teacher_update_not_comment():
-    print(f"[INFO]|{current_time()}|更新页面")
-    web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn"]/a').click()
-    web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn_o_3"]').click()
-    web.find_element(by=By.XPATH, value='//*[@id="queryform"]/table[1]/tbody/tr/td[2]/button').click()
-
-
 def teacher_update_not_over():
     print(f"[INFO]|{current_time()}|更新页面")
     web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn"]/a').click()

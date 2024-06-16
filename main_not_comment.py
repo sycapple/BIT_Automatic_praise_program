@@ -9,18 +9,28 @@ from selenium.webdriver.chrome.service import Service
 import sys
 
 
-def teacher_update_not_over():
+def teacher_update_not_comment():
     print(f"[INFO]|{current_time()}|更新页面")
     web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn"]/a').click()
     web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn_o_3"]').click()
     web.find_element(by=By.XPATH, value='//*[@id="queryform"]/table[1]/tbody/tr/td[2]/button').click()
 
 
-def teacher_update_not_comment():
-    print(f"[INFO]|{current_time()}|更新页面")
-    web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn"]/a').click()
-    web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn_o_1"]').click()
-    web.find_element(by=By.XPATH, value='//*[@id="queryform"]/table[1]/tbody/tr/td[2]/button').click()
+def get_teacher_and_choose(web, teacher_num):
+    bad_teacher = []
+    teacher_names = []
+    for i in range(teacher_num):
+        tr = web.find_element(by=By.XPATH, value=f'//*[@id="table_report"]/tbody/tr[{i + 1}]')
+        teacher_name = tr.find_element(by=By.XPATH, value='./td[5]').text
+        teacher_names.append(teacher_name)
+        class_name = tr.find_element(by=By.XPATH, value='./td[4]').text
+        print(f"[INFO]|{current_time()}|[{i}]|{teacher_name}|{class_name}")
+    s = input(f"[INFO]|{current_time()}|请选择你想要差评的教师(填数字以','分隔,输入'-1'全部差评,全部好评则直接回车)>:")
+    if s == -1:
+        return teacher_names
+    for teacher in s.split(','):
+        bad_teacher.append(teacher_names[eval(teacher)])
+    return bad_teacher
 
 
 def red(text):
@@ -86,6 +96,8 @@ if __name__ == '__main__':
     except:
         pass
     print(f"[INFO]|{current_time()}|共有{teacher_num}位教师需要评教")
+    if teacher_num != 0:
+        bad_teacher = get_teacher_and_choose(web, teacher_num)
     for i in range(teacher_num):
         teacher_update_not_comment()
         teacher_name = web.find_element(by=By.XPATH, value='//*[@id="table_report"]/tbody/tr[1]/td[5]').text
@@ -93,12 +105,15 @@ if __name__ == '__main__':
         web.find_element(by=By.XPATH, value='//*[@id="table_report"]/tbody/tr[1]/td[7]/div/a').click()
         time.sleep(0.5)
         check_form_list = web.find_elements(by=By.XPATH, value='//*[@id="cjForm"]/div/div[2]/div[2]/div')
-        for i in range(9):
+        for j in range(9):
             check_form = check_form_list[i]
             info = check_form.find_element(by=By.XPATH, value='label').text
-            comment = blue("非常符合")
-            print(f"[INFO]|{current_time()}|{info}:{comment}")
-            check_form.find_element(by=By.XPATH, value='div[1]/input').click()
+            if j in bad_teacher:
+                comment = blue("非常不符合")
+                check_form.find_element(by=By.XPATH, value='div[5]/input').click()
+            else:
+                comment = blue("非常符合")
+                check_form.find_element(by=By.XPATH, value='div[1]/input').click()
         web.find_element(by=By.XPATH, value='//*[@id="cjForm"]/div/div[2]/div[2]/div[11]/a[1]').click()
         print(f"[INFO]|{current_time()}|{blue(teacher_name)}评教结束")
         time.sleep(0.5)
