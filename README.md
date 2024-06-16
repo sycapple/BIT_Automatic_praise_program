@@ -1,5 +1,5 @@
 # 提醒事项
-先去这个网站[https://pj.bit.edu.cn/pjxt2.0/welcome](北京理工大学评教页面)看看自己的课程结课了没
+先去这个网站[北京理工大学评教页面](https://pj.bit.edu.cn/pjxt2.0/welcome)看看自己的课程结课了没
 结课就使用`BIT_Automatic_praise_program_not_comment.exe`
 还没结课请使用`BIT_Automatic_praise_program_not_over.exe`
 # 使用方法
