@@ -44,11 +44,12 @@ def get_teacher_and_choose(web, teacher_num):
         class_name = tr.find_element(by=By.XPATH, value='./td[4]').text
         print(f"[INFO]|{current_time()}|[{i}]|{teacher_name}|{class_name}")
     s = input(f"[INFO]|{current_time()}|请选择你想要差评的教师(填数字以','分隔,输入'-1'全部差评,全部好评则直接回车)>:")
-    if s == -1:
-        for i in range(teacher_num):
-            bad_teacher.append(i)
-    for teacher in s.split(','):
-        bad_teacher.append(eval(teacher))
+    if s != '':
+        if s == '-1':
+            for i in range(teacher_num):
+                bad_teacher.append(i)
+        for teacher in s.split(','):
+            bad_teacher.append(eval(teacher))
     return bad_teacher
 
 
