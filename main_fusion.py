@@ -1,11 +1,10 @@
 import time
 
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import Select
 import sys
 
 
@@ -14,6 +13,13 @@ def teacher_update_not_comment():
     web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn"]/a').click()
     web.find_element(by=By.XPATH, value='//*[@id="ztTab_chzn_o_3"]').click()
     web.find_element(by=By.XPATH, value='//*[@id="queryform"]/table[1]/tbody/tr/td[2]/button').click()
+
+
+def teacher_update(flag):
+    if flag in {'Y', 'y'}:
+        teacher_update_not_comment()
+    else:
+        teacher_update_not_over()
 
 
 def teacher_update_not_over():
@@ -67,6 +73,8 @@ if __name__ == '__main__':
     print(f"[INFO]|{current_time()}|欢迎来到北理工全自动好评系统")
     ACCOUNT = input(f"[INFO]|{current_time()}|请输入需要评教的学号:>")
     PASSWORD = input(f"[INFO]|{current_time()}|请输入需要评教的密码:>")
+    nflag = input(f"[INFO]|{current_time()}|是否在校园网内使用该程序(y/n)?:>")
+    flag = input(f"[INFO]|{current_time()}|所有课程是否结课(y/n)?:>")
     print(f"[INFO]|{current_time()}|正在打开浏览器")
 
     # 创建浏览器对象
@@ -78,27 +86,49 @@ if __name__ == '__main__':
     options.add_argument("--start-maximized")
     options.add_experimental_option("detach", True)
     options.add_argument('--disable-blink-features=AutomationControlled')
-    web = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    web.execute_cdp_cmd("Emulation.setUserAgentOverride", {
-        "userAgent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0"
-    })
-    web.get('https://pj.bit.edu.cn/pjxt2.0/welcome')
+    web = webdriver.Chrome(options=options)
+    # web = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    # web.execute_cdp_cmd("Emulation.setUserAgentOverride", {
+    #     "userAgent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0"
+    # })
+    web.get('https://webvpn.bit.edu.cn/')
     print(f"[INFO]|{current_time()}|当前登录信息如下")
     print(f"[INFO]|{current_time()}|用户:{blue(ACCOUNT)}")
     print(f"[INFO]|{current_time()}|密码:{blue(PASSWORD)}")
     start_time = time.time()
-    web.find_element(by=By.XPATH, value='//*[@id="username"]').send_keys(ACCOUNT)
-    web.find_element(by=By.XPATH, value='//*[@id="password"]').send_keys(PASSWORD, Keys.ENTER)
-    try:
-        warning = web.find_element(by=By.XPATH, value='//*[@id="showErrorTip"]').text
-        print(f"[{red('ERROR')}]|{current_time()}|{red('登录失败')},{red(warning)}")
-        sys.exit()
-    except Exception as e:
-        print(f"[INFO]|{current_time()}|登陆成功")
-    time.sleep(0.5)
-    print(f"[INFO]|{current_time()}|进入评教界面")
-    web.get('https://pj.bit.edu.cn/pjxt2.0/stpj/queryListStpj')
-    teacher_update_not_comment()
+    if nflag in {'n', 'N'}:
+        print(f"[INFO]|{current_time()}|登录一体化认证")
+        web.find_element(by=By.XPATH, value='//*[@id="username"]').send_keys(ACCOUNT)
+        web.find_element(by=By.XPATH, value='//*[@id="password"]').send_keys(PASSWORD, Keys.ENTER)
+        try:
+            warning = web.find_element(by=By.XPATH, value='//*[@id="showErrorTip"]').text
+            print(f"[{red('ERROR')}]|{current_time()}|{red('登录失败')},{red(warning)}")
+            sys.exit()
+        except Exception as e:
+            print(f"[INFO]|{current_time()}|登陆成功")
+        time.sleep(0.5)
+        print(f"[INFO]|{current_time()}|进入评教网站")
+        web.find_element(by=By.XPATH, value='//*[@id="history"]/div[2]/div').click()
+        web.switch_to.window(web.window_handles[-1])
+        web.find_element(by=By.XPATH, value='/html/body/div[6]/a[2]/div').click()
+        web.find_element(by=By.XPATH, value='//*[@id="submot"]').click()
+        web.switch_to.window(web.window_handles[-1])
+        webUrl = f"https://webvpn.bit.edu.cn/https-443/{web.current_url.split('/')[4]}/pjxt2.0/stpj/queryListStpj"
+        print(f"[INFO]|{current_time()}|进入评教界面")
+        web.get(webUrl)
+    else:
+        web.find_element(by=By.XPATH, value='//*[@id="username"]').send_keys(ACCOUNT)
+        web.find_element(by=By.XPATH, value='//*[@id="password"]').send_keys(PASSWORD, Keys.ENTER)
+        try:
+            warning = web.find_element(by=By.XPATH, value='//*[@id="showErrorTip"]').text
+            print(f"[{red('ERROR')}]|{current_time()}|{red('登录失败')},{red(warning)}")
+            sys.exit()
+        except Exception as e:
+            print(f"[INFO]|{current_time()}|登陆成功")
+        time.sleep(0.5)
+        print(f"[INFO]|{current_time()}|进入评教界面")
+        web.get('https://pj.bit.edu.cn/pjxt2.0/stpj/queryListStpj')
+    teacher_update(flag)
     print(f"[INFO]|{current_time()}|正在获取需要评教的教师数量")
     try:
         teacher_num = web.find_element(by=By.XPATH,
@@ -110,14 +140,14 @@ if __name__ == '__main__':
     if teacher_num != 0:
         bad_teacher = get_teacher_and_choose(web, teacher_num)
     for i in range(teacher_num):
-        teacher_update_not_comment()
+        teacher_update(flag)
         teacher_name = web.find_element(by=By.XPATH, value='//*[@id="table_report"]/tbody/tr[1]/td[5]').text
         print(f"[INFO]|{current_time()}|正在评教{blue(teacher_name)}")
         web.find_element(by=By.XPATH, value='//*[@id="table_report"]/tbody/tr[1]/td[7]/div/a').click()
         time.sleep(0.5)
         check_form_list = web.find_elements(by=By.XPATH, value='//*[@id="cjForm"]/div/div[2]/div[2]/div')
         for j in range(9):
-            check_form = check_form_list[i]
+            check_form = check_form_list[j]
             info = check_form.find_element(by=By.XPATH, value='label').text
             if j in bad_teacher:
                 comment = blue("非常不符合")
