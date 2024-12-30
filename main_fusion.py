@@ -66,6 +66,17 @@ def current_time():
     return yellow(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 
 
+def login(web):
+    web.find_element(by=By.XPATH, value='//*[@id="username"]').send_keys(ACCOUNT)
+    web.find_element(by=By.XPATH, value='//*[@id="password"]').send_keys(PASSWORD, Keys.ENTER)
+    try:
+        warning = web.find_element(by=By.XPATH, value='//*[@id="showErrorTip"]').text
+        print(f"[{red('ERROR')}]|{current_time()}|{red('登录失败')},{red(warning)}")
+        sys.exit()
+    except Exception as e:
+        print(f"[INFO]|{current_time()}|登陆成功")
+
+
 if __name__ == '__main__':
     ACCOUNT = ''
     PASSWORD = ''
@@ -73,8 +84,8 @@ if __name__ == '__main__':
     print(f"[INFO]|{current_time()}|欢迎来到北理工全自动好评系统")
     ACCOUNT = input(f"[INFO]|{current_time()}|请输入需要评教的学号:>")
     PASSWORD = input(f"[INFO]|{current_time()}|请输入需要评教的密码:>")
-    nflag = input(f"[INFO]|{current_time()}|是否在校园网内使用该程序(y/n)?:>")
     flag = input(f"[INFO]|{current_time()}|所有课程是否结课(y/n)?:>")
+    nflag = input(f"[INFO]|{current_time()}|是否校内访问(y/n)?:>")
     print(f"[INFO]|{current_time()}|正在打开浏览器")
 
     # 创建浏览器对象
@@ -91,76 +102,54 @@ if __name__ == '__main__':
     # web.execute_cdp_cmd("Emulation.setUserAgentOverride", {
     #     "userAgent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0"
     # })
-    web.get('https://webvpn.bit.edu.cn/')
     print(f"[INFO]|{current_time()}|当前登录信息如下")
     print(f"[INFO]|{current_time()}|用户:{blue(ACCOUNT)}")
     print(f"[INFO]|{current_time()}|密码:{blue(PASSWORD)}")
     start_time = time.time()
-    if nflag in {'n', 'N'}:
-        print(f"[INFO]|{current_time()}|登录一体化认证")
-        web.find_element(by=By.XPATH, value='//*[@id="username"]').send_keys(ACCOUNT)
-        web.find_element(by=By.XPATH, value='//*[@id="password"]').send_keys(PASSWORD, Keys.ENTER)
-        try:
-            warning = web.find_element(by=By.XPATH, value='//*[@id="showErrorTip"]').text
-            print(f"[{red('ERROR')}]|{current_time()}|{red('登录失败')},{red(warning)}")
-            sys.exit()
-        except Exception as e:
-            print(f"[INFO]|{current_time()}|登陆成功")
-        time.sleep(0.5)
-        print(f"[INFO]|{current_time()}|进入评教网站")
-        web.find_element(by=By.XPATH, value='//*[@id="history"]/div[2]/div').click()
-        web.switch_to.window(web.window_handles[-1])
-        web.find_element(by=By.XPATH, value='/html/body/div[6]/a[2]/div').click()
-        web.find_element(by=By.XPATH, value='//*[@id="submot"]').click()
-        web.switch_to.window(web.window_handles[-1])
-        webUrl = f"https://webvpn.bit.edu.cn/https-443/{web.current_url.split('/')[4]}/pjxt2.0/stpj/queryListStpj"
-        print(f"[INFO]|{current_time()}|进入评教界面")
-        web.get(webUrl)
-    else:
-        web.find_element(by=By.XPATH, value='//*[@id="username"]').send_keys(ACCOUNT)
-        web.find_element(by=By.XPATH, value='//*[@id="password"]').send_keys(PASSWORD, Keys.ENTER)
-        try:
-            warning = web.find_element(by=By.XPATH, value='//*[@id="showErrorTip"]').text
-            print(f"[{red('ERROR')}]|{current_time()}|{red('登录失败')},{red(warning)}")
-            sys.exit()
-        except Exception as e:
-            print(f"[INFO]|{current_time()}|登陆成功")
-        time.sleep(0.5)
-        print(f"[INFO]|{current_time()}|进入评教界面")
-        web.get('https://pj.bit.edu.cn/pjxt2.0/stpj/queryListStpj')
+    print(f"[INFO]|{current_time()}|登录一体化认证")
+if nflag in {'y', 'Y'}:
+    web.get('https://pj.bit.edu.cn/pjxt2.0/welcome')
+    login(web)
+    web.get('https://pj.bit.edu.cn/pjxt2.0/stpj/queryListStpj')
+else:
+    web.get(
+        "https://webvpn.bit.edu.cn/https/77726476706e69737468656265737421e0fd0f9e2e2426557a1dc7af96/pjxt2.0/welcome")
+    login(web)
+    web.get(
+        "https://webvpn.bit.edu.cn/https-443/77726476706e69737468656265737421e0fd0f9e2e2426557a1dc7af96/pjxt2.0/stpj/queryListStpj")
+teacher_update(flag)
+print(f"[INFO]|{current_time()}|正在获取需要评教的教师数量")
+try:
+    teacher_num = web.find_element(by=By.XPATH,
+                                   value='//*[@id="queryform"]/div/table/tbody/tr/td/div/ul/li[1]/a/font').text
+    teacher_num = eval(teacher_num)
+except:
+    pass
+print(f"[INFO]|{current_time()}|共有{teacher_num}位教师需要评教")
+if teacher_num != 0:
+    bad_teacher = get_teacher_and_choose(web, teacher_num)
+for i in range(teacher_num):
     teacher_update(flag)
-    print(f"[INFO]|{current_time()}|正在获取需要评教的教师数量")
-    try:
-        teacher_num = web.find_element(by=By.XPATH,
-                                       value='//*[@id="queryform"]/div/table/tbody/tr/td/div/ul/li[1]/a/font').text
-        teacher_num = eval(teacher_num)
-    except:
-        pass
-    print(f"[INFO]|{current_time()}|共有{teacher_num}位教师需要评教")
-    if teacher_num != 0:
-        bad_teacher = get_teacher_and_choose(web, teacher_num)
-    for i in range(teacher_num):
-        teacher_update(flag)
-        teacher_name = web.find_element(by=By.XPATH, value='//*[@id="table_report"]/tbody/tr[1]/td[5]').text
-        print(f"[INFO]|{current_time()}|正在评教{blue(teacher_name)}")
-        web.find_element(by=By.XPATH, value='//*[@id="table_report"]/tbody/tr[1]/td[7]/div/a').click()
-        time.sleep(0.5)
-        check_form_list = web.find_elements(by=By.XPATH, value='//*[@id="cjForm"]/div/div[2]/div[2]/div')
-        for j in range(9):
-            check_form = check_form_list[j]
-            info = check_form.find_element(by=By.XPATH, value='label').text
-            if j in bad_teacher:
-                comment = blue("非常不符合")
-                check_form.find_element(by=By.XPATH, value='div[5]/input').click()
-            else:
-                comment = blue("非常符合")
-                check_form.find_element(by=By.XPATH, value='div[1]/input').click()
-        web.find_element(by=By.XPATH, value='//*[@id="cjForm"]/div/div[2]/div[2]/div[11]/a[1]').click()
-        print(f"[INFO]|{current_time()}|{blue(teacher_name)}评教结束")
-        time.sleep(0.5)
-        web.find_element(by=By.XPATH, value='/html/body/div[2]/div[2]/a').click()
-        time.sleep(1)
-    print(f"[INFO]|{current_time()}|所有评教结束")
-    print(f"[INFO]|{current_time()}|本次评教了{blue(teacher_num)}位教师")
-    end_time = time.time()
-    print(f"[INFO]|{current_time()}|用时{blue(end_time - start_time)}s")
+    teacher_name = web.find_element(by=By.XPATH, value='//*[@id="table_report"]/tbody/tr[1]/td[5]').text
+    print(f"[INFO]|{current_time()}|正在评教{blue(teacher_name)}")
+    web.find_element(by=By.XPATH, value='//*[@id="table_report"]/tbody/tr[1]/td[7]/div/a').click()
+    time.sleep(0.5)
+    check_form_list = web.find_elements(by=By.XPATH, value='//*[@id="cjForm"]/div/div[2]/div[2]/div')
+    for j in range(9):
+        check_form = check_form_list[j]
+        info = check_form.find_element(by=By.XPATH, value='label').text
+        if j in bad_teacher:
+            comment = blue("非常不符合")
+            check_form.find_element(by=By.XPATH, value='div[5]/input').click()
+        else:
+            comment = blue("非常符合")
+            check_form.find_element(by=By.XPATH, value='div[1]/input').click()
+    web.find_element(by=By.XPATH, value='//*[@id="cjForm"]/div/div[2]/div[2]/div[11]/a[1]').click()
+    print(f"[INFO]|{current_time()}|{blue(teacher_name)}评教结束")
+    time.sleep(0.5)
+    web.find_element(by=By.XPATH, value='/html/body/div[2]/div[2]/a').click()
+    time.sleep(1)
+print(f"[INFO]|{current_time()}|所有评教结束")
+print(f"[INFO]|{current_time()}|本次评教了{blue(teacher_num)}位教师")
+end_time = time.time()
+print(f"[INFO]|{current_time()}|用时{blue(end_time - start_time)}s")
